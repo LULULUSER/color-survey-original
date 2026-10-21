@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Color Survey 颜色实验</title>
+<script src="/collection.js"></script>
+<style>body{max-width:760px;margin:40px auto;padding:20px;background:#808080;color:#111;font:16px/1.6 Arial,sans-serif}a{color:inherit}li{margin:20px 0}button{font:inherit;padding:8px 14px}</style>
+<main>
+  <h1>Color Survey 颜色实验</h1>
+  <p>回答以随机参与者编号保存。请在同一浏览器中完成两项任务，以便关联回答；请勿填写姓名或联系方式。</p>
+  <ul>
+    <li><a href="/color-similarity/">颜色相似性判断实验</a>：10种颜色，360题。</li>
+    <li><a href="/color-language/">颜色描述实验</a>：10种颜色，每色两个问题。</li>
+  </ul>
+  <button type="button" id="new-participant">更换参与者</button>
+  <p id="participant-status" role="status"></p>
+</main>
+<script>
+document.querySelector('#new-participant').onclick=()=>{
+  if(confirm('为下一位参与者生成新的匿名编号？')){
+    localStorage.removeItem('color-survey-collection-participant');
+    document.querySelector('#participant-status').textContent='已为下一位参与者生成新编号。';
+    getParticipantId();
+  }
+};
+</script>
+</html>

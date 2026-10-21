@@ -1,8 +1,8 @@
 import http from 'node:http';
 import {readFile} from 'node:fs/promises';
 import path from 'node:path';
-const root=path.resolve('site');
-const prefix='/color-survey-original';
+const root=path.resolve(process.argv[2]||'site');
+const prefix=process.argv[3]==='/'?'':(process.argv[3]||'/color-survey-original');
 const server=http.createServer(async(req,res)=>{
   const pathname=new URL(req.url,'http://localhost').pathname;
   if(pathname===prefix){res.writeHead(302,{Location:prefix+'/'});res.end();return;}

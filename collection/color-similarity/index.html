@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>颜色相似性判断实验</title>
+  <script src="/collection.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 760px;
+      margin: 40px auto;
+      padding: 20px;
+      line-height: 1.6;
+      background-color: #808080;
+      color: #111;
+    }
+
+    .page {
+      display: none;
+      background-color: #808080;
+    }
+
+    .active {
+      display: block;
+    }
+
+    .blank-screen {
+      display: none;
+      height: 80vh;
+      background-color: #808080;
+    }
+
+    .color-box {
+      width: 180px;
+      height: 180px;
+      border: 1px solid #555;
+      margin: 12px auto;
+    }
+
+    .target {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .options {
+      display: flex;
+      justify-content: space-between;
+      gap: 30px;
+      margin-top: 20px;
+    }
+
+    .option {
+      flex: 1;
+      text-align: center;
+      border: 1px solid #555;
+      padding: 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      background-color: #8a8a8a;
+    }
+
+    .option input {
+      margin-top: 10px;
+      transform: scale(1.3);
+    }
+
+    .button-row {
+      text-align: center;
+      margin-top: 25px;
+    }
+
+    button {
+      padding: 10px 24px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .progress {
+      color: #222;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>颜色相似性判断实验</h2>
+
+  <div id="blank-screen" class="blank-screen"></div>
+
+  <form name="color-similarity-survey" method="POST" data-netlify="true" data-collection action="/thank-you.html">
+    <input type="hidden" name="form-name" value="color-similarity-survey" />
+    <input type="hidden" name="participant_id" id="participant_id" />
+    <input type="hidden" name="vision" id="vision_hidden" />
+    <input type="hidden" name="responses_json" id="responses_json" />
+    <input type="hidden" name="submission_id" />
+    <input type="hidden" name="experiment_version" value="original-collection-v1" />
+
+    <div id="pages"></div>
+  </form>
+
+<script>
+const colors = [
+  "rgb(236,61,71)",
+  "rgb(234,66,41)",
+  "rgb(217,87,21)",
+  "rgb(195,104,19)",
+  "rgb(174,117,17)",
+  "rgb(15,142,153)",
+  "rgb(14,144,128)",
+  "rgb(14,146,102)",
+  "rgb(15,148,74)",
+  "rgb(15,149,40)"
+];
+
+const participantId = getParticipantId();
+document.getElementById("participant_id").value = participantId;
+
+const pagesContainer = document.getElementById("pages");
+const blankScreen = document.getElementById("blank-screen");
+
+let trials = [];
+let responses = [];
+let current = 0;
+
+function shuffle(array) {
+  const arr = array.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+for (let x = 0; x < colors.length; x++) {
+  const others = [];
+  for (let i = 0; i < colors.length; i++) {
+    if (i !== x) others.push(i);
+  }
+
+  for (let i = 0; i < others.length; i++) {
+    for (let j = i + 1; j < others.length; j++) {
+      const a = others[i];
+      const b = others[j];
+      const optionOrder = shuffle([a, b]);
+
+      trials.push({
+        target_index: x + 1,
+        target_rgb: colors[x],
+        option_left_index: optionOrder[0] + 1,
+        option_left_rgb: colors[optionOrder[0]],
+        option_right_index: optionOrder[1] + 1,
+        option_right_rgb: colors[optionOrder[1]]
+      });
+    }
+  }
+}
+
+trials = shuffle(trials);
+
+pagesContainer.innerHTML += `
+  <div class="page active">
+    <p>欢迎参与本实验。</p>
+    <p>你将看到一个目标颜色，以及两个候选颜色。请判断两个候选颜色中，哪一个与目标颜色更接近。</p>
+    <p>本实验共有 ${trials.length} 个问题。</p>
+
+    <p>你的颜色视觉情况：</p>
+    <select id="vision_select" required>
+      <option value="">请选择</option>
+      <option value="normal">正常</option>
+      <option value="color_blind">色觉异常（色盲/色弱）</option>
+      <option value="unsure">不确定</option>
+    </select>
+
+    <div class="button-row">
+      <button type="button" onclick="startSurvey()">开始</button>
+    </div>
+  </div>
+`;
+
+trials.forEach((trial, i) => {
+  pagesContainer.innerHTML += `
+    <div class="page">
+      <div class="progress">问题 ${i + 1} / ${trials.length}</div>
+
+      <div class="target">
+        <h3>目标颜色</h3>
+        <div class="color-box" style="background: ${trial.target_rgb};"></div>
+      </div>
+
+      <p>以下两个颜色中，哪一个和目标颜色更接近？</p>
+
+      <div class="options">
+        <label class="option">
+          <div class="color-box" style="background: ${trial.option_left_rgb};"></div>
+          <p>左边颜色</p>
+          <input type="radio" name="trial_${i}" value="left" required />
+        </label>
+
+        <label class="option">
+          <div class="color-box" style="background: ${trial.option_right_rgb};"></div>
+          <p>右边颜色</p>
+          <input type="radio" name="trial_${i}" value="right" required />
+        </label>
+      </div>
+
+      <div class="button-row">
+        <button type="button" onclick="nextTrial(${i})">下一页</button>
+      </div>
+    </div>
+  `;
+});
+
+pagesContainer.innerHTML += `
+  <div class="page">
+    <h3>完成</h3>
+    <p>感谢你的参与！请点击提交。</p>
+    <div class="button-row">
+      <button type="submit" onclick="finalizeResponses()">提交</button>
+    </div>
+  </div>
+`;
+
+const pages = document.getElementsByClassName("page");
+
+function showPage(index, useBlank = true) {
+  pages[current].classList.remove("active");
+
+  if (useBlank) {
+    blankScreen.style.display = "block";
+
+    setTimeout(() => {
+      blankScreen.style.display = "none";
+      current = index;
+      pages[current].classList.add("active");
+    }, 1000);
+  } else {
+    current = index;
+    pages[current].classList.add("active");
+  }
+}
+
+function startSurvey() {
+  const vision = document.getElementById("vision_select").value;
+  if (!vision) {
+    alert("请选择你的颜色视觉情况。");
+    return;
+  }
+
+  document.getElementById("vision_hidden").value = vision;
+  showPage(1, true);
+}
+
+function nextTrial(trialIndex) {
+  const selected = document.querySelector(`input[name="trial_${trialIndex}"]:checked`);
+
+  if (!selected) {
+    alert("请选择一个更接近目标颜色的选项。");
+    return;
+  }
+
+  const trial = trials[trialIndex];
+  const selectedSide = selected.value;
+
+  responses[trialIndex] = {
+    participant_id: participantId,
+    trial_number: trialIndex + 1,
+
+    target_index: trial.target_index,
+    target_rgb: trial.target_rgb,
+
+    option_left_index: trial.option_left_index,
+    option_left_rgb: trial.option_left_rgb,
+
+    option_right_index: trial.option_right_index,
+    option_right_rgb: trial.option_right_rgb,
+
+    selected_side: selectedSide,
+    selected_index: selectedSide === "left" ? trial.option_left_index : trial.option_right_index,
+    selected_rgb: selectedSide === "left" ? trial.option_left_rgb : trial.option_right_rgb
+  };
+
+  document.getElementById("responses_json").value = JSON.stringify(responses);
+
+  showPage(current + 1, true);
+}
+
+function finalizeResponses() {
+  document.getElementById("responses_json").value = JSON.stringify(responses);
+}
+</script>
+
+</body>
+</html>
