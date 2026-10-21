@@ -16,6 +16,8 @@
 
 展示站网址：https://lululuser.github.io/color-survey-original/ 。这个地址不收集回答。
 
+收集站网址：https://lululuser-color-survey-original.netlify.app/ 。回答在Netlify私有后台的Forms中查看和导出；具体步骤见DATA_COLLECTION.md。
+
 本仓库不包含既往参与者数据、CSV、embedding或任何密钥。scripts目录只用于本地预览/检查，不发布到Pages。
 
 上游来源：https://github.com/HornHehhf/color-survey 。本地依据用户提供的color-survey-main代码副本制作。
