@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>颜色描述实验</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #808080; /* rgb(128,128,128) */
+      color: #111;
+      line-height: 1.6;
+    }
+
+    .page {
+      display: none;
+      background-color: #808080;
+    }
+
+    .active {
+      display: block;
+    }
+
+    .blank-screen {
+      display: none;
+      height: 80vh;
+      background-color: #808080;
+    }
+
+    .color-box {
+      width: 200px;
+      height: 200px;
+      border: 1px solid #555;
+      margin: 20px auto;
+    }
+
+    textarea {
+      width: 100%;
+      height: 90px;
+      font-size: 16px;
+    }
+
+    .button-row {
+      text-align: center;
+      margin-top: 24px;
+    }
+
+    button {
+      padding: 10px 24px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .hint {
+      font-size: 14px;
+      color: #222;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>颜色描述实验</h2>
+<p role="note">原版展示模式：回答仅在当前页面临时保留，不上传、不保存为实验数据。</p>
+
+<div id="blank-screen" class="blank-screen"></div>
+
+<!-- 静态隐藏表单：让 Netlify 在部署时识别所有字段 -->
+<form name="color-language-survey" hidden onsubmit="return false">
+  <input type="text" name="participant_id" />
+  <input type="text" name="vision" />
+
+  <input type="text" name="color_1_rgb" />
+  <textarea name="color_1_q1"></textarea>
+  <textarea name="color_1_q2"></textarea>
+
+  <input type="text" name="color_2_rgb" />
+  <textarea name="color_2_q1"></textarea>
+  <textarea name="color_2_q2"></textarea>
+
+  <input type="text" name="color_3_rgb" />
+  <textarea name="color_3_q1"></textarea>
+  <textarea name="color_3_q2"></textarea>
+
+  <input type="text" name="color_4_rgb" />
+  <textarea name="color_4_q1"></textarea>
+  <textarea name="color_4_q2"></textarea>
+
+  <input type="text" name="color_5_rgb" />
+  <textarea name="color_5_q1"></textarea>
+  <textarea name="color_5_q2"></textarea>
+
+  <input type="text" name="color_6_rgb" />
+  <textarea name="color_6_q1"></textarea>
+  <textarea name="color_6_q2"></textarea>
+
+  <input type="text" name="color_7_rgb" />
+  <textarea name="color_7_q1"></textarea>
+  <textarea name="color_7_q2"></textarea>
+
+  <input type="text" name="color_8_rgb" />
+  <textarea name="color_8_q1"></textarea>
+  <textarea name="color_8_q2"></textarea>
+
+  <input type="text" name="color_9_rgb" />
+  <textarea name="color_9_q1"></textarea>
+  <textarea name="color_9_q2"></textarea>
+
+  <input type="text" name="color_10_rgb" />
+  <textarea name="color_10_q1"></textarea>
+  <textarea name="color_10_q2"></textarea>
+</form>
+
+<!-- 真正提交表单 -->
+<form name="color-language-survey" onsubmit="return false">
+  <input type="hidden" name="form-name" value="color-language-survey">
+  <input type="hidden" name="redirect" value="/thank-you.html">
+  <input type="hidden" name="participant_id" id="participant_id">
+  <div id="pages"></div>
+</form>
+
+<script>
+
+// isoluminant colors with gray background rgb(128,128,128)
+let colors = [
+  "rgb(236,61,71)",
+  "rgb(234,66,41)",
+  "rgb(217,87,21)",
+  "rgb(195,104,19)",
+  "rgb(174,117,17)",
+  "rgb(15,142,153)",
+  "rgb(14,144,128)",
+  "rgb(14,146,102)",
+  "rgb(15,148,74)",
+  "rgb(15,149,40)"
+];
+
+// 随机打乱颜色顺序
+colors = colors.sort(() => Math.random() - 0.5);
+
+const container = document.getElementById("pages");
+const blankScreen = document.getElementById("blank-screen");
+
+// 首页
+container.innerHTML += `
+<div class="page active">
+  <p>欢迎参与实验。</p>
+  <p>你将看到10种颜色，每种颜色需要回答两个问题。</p>
+
+  <p>你的颜色视觉情况：</p>
+  <select name="vision" required>
+    <option value="">请选择</option>
+    <option value="normal">正常</option>
+    <option value="color_blind">色觉异常（色盲/色弱）</option>
+    <option value="unsure">不确定</option>
+  </select>
+
+  <div class="button-row">
+    <button type="button" onclick="next()">开始</button>
+  </div>
+</div>
+`;
+
+// 生成颜色页面
+colors.forEach((color, i) => {
+  const index = i + 1;
+
+  container.innerHTML += `
+  <div class="page">
+    <h3>颜色 ${index}</h3>
+
+    <input type="hidden" name="color_${index}_rgb" value="${color}" />
+
+    <div class="color-box" style="background:${color};"></div>
+
+    <p>问题1：你真实感受到的这个颜色是什么样？请尽量具体描述。</p>
+    <p class="hint">例如：像天空一样的蓝色，但更深一些；像草地的绿色，稍微偏暗；像夕阳的橙色，但更亮。</p>
+    <textarea name="color_${index}_q1" required></textarea>
+
+    <p>问题2：如果你要向别人描述这个颜色，你会如何描述？</p>
+    <p class="hint">例如：我会说这是接近天空的蓝色，但更浓一点；或者像新鲜草叶的绿色。</p>
+    <textarea name="color_${index}_q2" required></textarea>
+
+    <div class="button-row">
+      <button type="button" onclick="next()">下一页</button>
+    </div>
+  </div>
+  `;
+});
+
+// 最后一页
+container.innerHTML += `
+<div class="page">
+  <h3>完成</h3>
+  <p>感谢你的参与！</p>
+  <div class="button-row">
+    <button type="button" onclick="finishDemo()">完成演示（不上传）</button>
+  </div>
+</div>
+`;
+
+// 分页逻辑
+let current = 0;
+const pages = document.getElementsByClassName("page");
+
+// participant ID
+document.getElementById("participant_id").value =
+  "p_" + Math.random().toString(36).substring(2, 10);
+
+function showNextPageWithBlank() {
+  pages[current].classList.remove("active");
+  blankScreen.style.display = "block";
+
+  setTimeout(() => {
+    blankScreen.style.display = "none";
+    current++;
+    pages[current].classList.add("active");
+  }, 1000);
+}
+
+function next() {
+  const inputs = pages[current].querySelectorAll("textarea[required], select[required]");
+  for (let input of inputs) {
+    if (!input.value.trim()) {
+      alert("请填写完整再继续");
+      return;
+    }
+  }
+
+  showNextPageWithBlank();
+}
+
+</script>
+
+<script src="../demo.js"></script>
+</body>
+</html>
